@@ -23,13 +23,13 @@ fn main() {
     let mut set_number = false;
     for arg in args {
         if set_base {
-            if let Ok(n) = arg.parse::<i32>() {
+            if let Ok(n) = arg.parse::<usize>() {
                 base = n;
             }
         }
 
         if set_number {
-            if let Ok(n) = arg.parse::<i32>() {
+            if let Ok(n) = arg.parse::<usize>() {
                 num = n;
             }
         }

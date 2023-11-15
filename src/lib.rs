@@ -5,20 +5,20 @@ pub use crate::board_iterator::BoardIter;
 
 #[derive(Clone)]
 pub enum Field {
-    Number(i32),
-    OptionList(Vec<i32>),
+    Number(usize),
+    OptionList(Vec<usize>),
 }
 
 enum SolverStep {
     Unsolvable,
-    BranchOnOptionList(i32),
+    BranchOnOptionList(usize),
     Solved,
 }
 
 pub struct Board {
     content: Vec<Field>,
-    base: i32,
-    line_size: i32,
+    base: usize,
+    line_size: usize,
 }
 
 // Order       Line        Board        String
@@ -48,28 +48,28 @@ impl Board {
         }
     }
 
-    fn reset(&mut self, base: i32) {
+    fn reset(&mut self, base: usize) {
         self.content.clear();
         self.base = base;
         self.line_size = self.base.pow(2);
 
         let board_size = self.line_size.pow(2);
-        self.content.reserve_exact(board_size as usize);
+        self.content.reserve_exact(board_size);
         for _ in 0..board_size {
             self.content.push( Field::OptionList( (0..self.line_size).collect() ) );
         }
     }
 
     pub fn read(&mut self, input: &str) -> bool {
-        let len = input.len() as i32;
+        let len = input.len();
         
         // find base
         let mut board_size = 0;
         self.base = 0;
         self.line_size = 0;
 
-        for i in 2..10 {
-            let p = (i as i32).pow(4);
+        for i in 2usize..10usize {
+            let p = i.pow(4);
             if (p == len) || (p == (len / 2)) {
                 self.base = i;
                 board_size = p;
@@ -88,10 +88,10 @@ impl Board {
         // parse string and fill numbers
         let num_size = if self.base <= 3 {1usize} else {2usize};
         for i in 0..board_size {
-            let i = i as usize;
+            let i = i;
             let num = &input[(i*num_size)..((i+1)*num_size)];
-            if let Ok(num) = num.parse::<i32>() {
-                if !self.set_num_index(i as i32, num - 1) {
+            if let Ok(num) = num.parse::<usize>() {
+                if !self.set_num_index(i, num - 1) {
                     return false;
                 }
             }
@@ -110,9 +110,9 @@ impl Board {
             }
 
             if pretty_print {
-                match i as i32 {
+                match i {
                     n if ((n / self.line_size) % self.base == self.base - 1) && (n % self.line_size == self.line_size - 1) =>
-                        res = format!("{0}\n{1:->2$}\n", res, "", width * (self.line_size as usize) + (self.base as usize) - 1),
+                        res = format!("{0}\n{1:->2$}\n", res, "", width * self.line_size + self.base - 1),
                     n if n % self.line_size == self.line_size - 1 =>
                         res = format!("{}\n", res),
                     n if n % self.base == self.base - 1 =>
@@ -128,21 +128,21 @@ impl Board {
         res
     }
 
-    fn get_num_index(&self, idx: i32) -> Option<i32> {
-        if let Field::Number(n) = self.content[idx as usize] {
+    fn get_num_index(&self, idx: usize) -> Option<usize> {
+        if let Field::Number(n) = self.content[idx] {
             Some(n)
         } else {
             None
         }
     }
 
-    fn clear_num_index(&mut self, idx: i32) {
-        if let Field::Number(i) = self.content[idx as usize] {
-            self.content[idx as usize] = Field::OptionList(vec!(i));
+    fn clear_num_index(&mut self, idx: usize) {
+        if let Field::Number(i) = self.content[idx] {
+            self.content[idx] = Field::OptionList(vec!(i));
         }
     }
 
-    fn set_num_index(&mut self, idx: i32, val: i32) -> bool {
+    fn set_num_index(&mut self, idx: usize, val: usize) -> bool {
         if self.base != 0 {
             // check inputs
             if !self.check_valid_number(val) {
@@ -153,7 +153,7 @@ impl Board {
             }
 
             // check if there is already a value
-            if let Field::Number(_) = self.content[idx as usize] {
+            if let Field::Number(_) = self.content[idx] {
                 return false;
             }
 
@@ -193,7 +193,7 @@ impl Board {
             }
 
             // insert value
-            self.content[idx as usize] = Field::Number(val);
+            self.content[idx] = Field::Number(val);
 
             // maybe: update Option list if options for a number have the same line/column
 
@@ -202,8 +202,8 @@ impl Board {
         return false;
     }
 
-    fn get_first_option_list(&self, idx: i32) -> Option<i32> {
-        if let Field::OptionList(list) = &self.content[idx as usize] {
+    fn get_first_option_list(&self, idx: usize) -> Option<usize> {
+        if let Field::OptionList(list) = &self.content[idx] {
             if list.len() > 0 {
                 Some(list[0])
             } else {
@@ -214,8 +214,8 @@ impl Board {
         }
     }
 
-    fn get_option_list(&self, idx: i32) -> Option<&[i32]> {
-        if let Field::OptionList(list) = &self.content[idx as usize] {
+    fn get_option_list(&self, idx: usize) -> Option<&[usize]> {
+        if let Field::OptionList(list) = &self.content[idx] {
             if list.len() > 0 {
                 Some(&list)
             } else {
@@ -226,9 +226,9 @@ impl Board {
         }
     }
 
-    fn remove_from_option_list(&mut self, idx: i32, val: i32) {
+    fn remove_from_option_list(&mut self, idx: usize, val: usize) {
         if self.check_valid_number(val) && self.check_valid_index(idx) {
-            if let Field::OptionList(list) = &mut self.content[idx as usize] {
+            if let Field::OptionList(list) = &mut self.content[idx] {
                 if let Some(i) = list.iter().position(|&x| x == val) {
                     list.swap_remove(i);
                 }
@@ -236,8 +236,8 @@ impl Board {
         }
     }
 
-    fn update_field(&mut self, idx: i32, val: i32) -> bool {
-        match &mut self.content[idx as usize] {
+    fn update_field(&mut self, idx: usize, val: usize) -> bool {
+        match &mut self.content[idx] {
             // if number already present, we cannot set the given number
             Field::Number(n) if *n == val => false,
             // remove number from option lists
@@ -251,34 +251,34 @@ impl Board {
         }
     }
 
-    fn idx_from_line_col(&self, line: i32, col: i32) -> i32 {
+    fn idx_from_line_col(&self, line: usize, col: usize) -> usize {
         line * self.line_size + col
     }
 
-    fn line_col_from_idx(&self, idx: i32) -> (i32, i32) {
+    fn line_col_from_idx(&self, idx: usize) -> (usize, usize) {
         let line = idx / self.line_size;
         (line, idx - line * self.line_size)
     }
 
-    fn quadrant_start_from_line_col(&self, line: i32, col: i32) -> (i32, i32) {
+    fn quadrant_start_from_line_col(&self, line: usize, col: usize) -> (usize, usize) {
         ((line / self.base) * self.base, (col / self.base) * self.base)
     }
 
-    fn check_valid_index(&self, idx: i32) -> bool {
-        !((idx >= (self.content.len() as i32)) || (idx < 0))
+    fn check_valid_index(&self, idx: usize) -> bool {
+        !(idx >= (self.content.len()))
     }
 
-    fn check_valid_number(&self, num: i32) -> bool {
-        !((num >= self.line_size) || (num < 0))
+    fn check_valid_number(&self, num: usize) -> bool {
+        !(num >= self.line_size)
     }
 
-    fn check_valid_coord(&self, line: i32, col: i32) -> bool {
+    fn check_valid_coord(&self, line: usize, col: usize) -> bool {
         self.check_valid_index(self.idx_from_line_col(line, col)) &&
-        (line < self.line_size) && (line >= 0) &&
-        (col < self.line_size) && (col >= 0)
+        (line < self.line_size) &&
+        (col < self.line_size)
     }
 
-    pub fn line_iter(&self, line: i32) -> BoardIter {
+    pub fn line_iter(&self, line: usize) -> BoardIter {
         if self.check_valid_coord(line, 0) {
             BoardIter::new_line_iter(self, line)
         } else {
@@ -286,7 +286,7 @@ impl Board {
         }
     }
 
-    pub fn col_iter(&self, col: i32) -> BoardIter {
+    pub fn col_iter(&self, col: usize) -> BoardIter {
         if self.check_valid_coord(0, col) {
             BoardIter::new_col_iter(self, col)
         } else {
@@ -294,7 +294,7 @@ impl Board {
         }
     }
 
-    pub fn quad_iter(&self, quad_idx: i32) -> BoardIter {
+    pub fn quad_iter(&self, quad_idx: usize) -> BoardIter {
         if quad_idx <= self.line_size {
             let col = (quad_idx * self.base) % self.line_size;
             BoardIter::new_quad_iter(self, quad_idx, col)
@@ -307,10 +307,10 @@ impl Board {
         BoardIter::new_field_iter(self)
     }
 
-    fn find_single_option<'a, F, G>(&'a self, get_iterator: F, get_idx: G) -> Option<(i32, i32)>  // find a number that has only one option within a quadrant/line/col
+    fn find_single_option<'a, F, G>(&'a self, get_iterator: F, get_idx: G) -> Option<(usize, usize)>  // find a number that has only one option within a quadrant/line/col
     where
-        F: Fn(i32) -> BoardIter<'a>,
-        G: Fn(i32, i32) -> i32
+        F: Fn(usize) -> BoardIter<'a>,
+        G: Fn(usize, usize) -> usize
     {
         for q_idx in 0..self.line_size {
             for n in 0..self.line_size {
@@ -332,7 +332,7 @@ impl Board {
                 }
     
                 if count == 1 {
-                    return Some((n, get_idx(idx as i32, q_idx)));
+                    return Some((n, get_idx(idx, q_idx)));
                 }
             }
         }
@@ -420,7 +420,7 @@ impl Board {
                             1 => {
                                 cont = true;
                                 let num = list[0];
-                                let res = current_board.set_num_index(idx as i32, num);
+                                let res = current_board.set_num_index(idx, num);
                                 if !res {
                                     break SolverStep::Unsolvable;
                                 }
@@ -438,7 +438,7 @@ impl Board {
                 }
     
                 if !cont {
-                    break SolverStep::BranchOnOptionList(shortest_list_idx as i32);
+                    break SolverStep::BranchOnOptionList(shortest_list_idx);
                 }
             };
     
@@ -473,7 +473,7 @@ impl Board {
         }
     }
 
-    pub fn generate(base: i32) -> Board { // a board generator based on 5 random numbers from the number range of the board
+    pub fn generate(base: usize) -> Board { // a board generator based on 5 random numbers from the number range of the board
         let numbers_count_max = 5;
         let board_size = base.pow(4);
         let num_to_delete = board_size * 100 / 70;

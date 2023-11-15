@@ -11,12 +11,12 @@ pub enum IterType {
 pub struct BoardIter<'a> {
     itertype: IterType,
     b: &'a Board,
-    line: i32,
-    col: i32,
-    idx: i32,
-    quadrant_idx: i32,
-    start_line: i32,
-    start_col: i32,
+    line: usize,
+    col: usize,
+    idx: usize,
+    quadrant_idx: usize,
+    start_line: usize,
+    start_col: usize,
 }
 
 impl<'a> Iterator for BoardIter<'a> {
@@ -26,7 +26,7 @@ impl<'a> Iterator for BoardIter<'a> {
         if self.b.check_valid_coord(self.line, self.col) {
             self.idx = self.b.idx_from_line_col(self.line, self.col);
             self.advance_idx();
-            Some(& self.b.content[self.idx as usize])
+            Some(& self.b.content[self.idx])
         } else {
             None
         }
@@ -34,15 +34,15 @@ impl<'a> Iterator for BoardIter<'a> {
 }
 
 impl<'a> BoardIter<'a> {
-    pub fn new_line_iter(b: &'a Board, line: i32) -> Self {
+    pub fn new_line_iter(b: &'a Board, line: usize) -> Self {
         BoardIter { itertype: IterType::LineIter, b, line, col: 0, idx: 0, quadrant_idx: 0, start_line: 0, start_col: 0}
     }
 
-    pub fn new_col_iter(b: &'a Board, col: i32) -> Self {
+    pub fn new_col_iter(b: &'a Board, col: usize) -> Self {
         BoardIter { itertype: IterType::ColIter, b, line: 0, col, idx: 0, quadrant_idx: 0, start_line: 0, start_col: 0}
     }
 
-    pub fn new_quad_iter(b: &'a Board, line: i32, col: i32) -> Self {
+    pub fn new_quad_iter(b: &'a Board, line: usize, col: usize) -> Self {
         let (line, col) = b.quadrant_start_from_line_col(line, col);
         BoardIter { itertype: IterType::QuadIter, b, line, col, idx: 0, quadrant_idx: 0, start_line: line, start_col: col}
     }
